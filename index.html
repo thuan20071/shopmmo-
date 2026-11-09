@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THUAN MMO SHOP — Tool & Tài nguyên MMO</title>
+<meta name="description" content="THUAN MMO SHOP: bán tool và tài nguyên MMO, nạp VietQR MB Bank tối thiểu 10.000đ, mua xong tải file ngay, có tài khoản và lịch sử mua riêng.">
+<meta property="og:title" content="THUAN MMO SHOP">
+<meta property="og:description" content="Tool & tài nguyên MMO — mua xong tải file ngay.">
+<meta property="og:type" content="website">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial;background:#070b16;color:#e8ecf8}
+a{color:#7dd3fc}header{position:sticky;top:0;background:#0b1120ee;border-bottom:1px solid #1e293b;padding:12px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;z-index:9}
+.logo{font-weight:900;font-size:22px;background:linear-gradient(90deg,#22d3ee,#a78bfa,#f472b6);-webkit-background-clip:text;color:transparent}
+nav button,.btn{background:#111c33;color:#fff;border:1px solid #26365c;border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:700}
+.btn.pri{background:linear-gradient(90deg,#0891b2,#7c3aed);border:0}.btn.warn{background:#7f1d1d}
+input,select,textarea{width:100%;padding:10px;border-radius:9px;border:1px solid #334155;background:#0f172a;color:#fff;margin:5px 0 10px}
+.wrap{max-width:1150px;margin:auto;padding:18px}.hero{background:radial-gradient(600px 200px at 20% 0,#155e75,transparent),linear-gradient(135deg,#111827,#1e1b4b);border:1px solid #26365c;border-radius:18px;padding:28px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{background:#0f172a;border:1px solid #26365c;border-radius:14px;padding:14px}.card img{width:100%;height:130px;object-fit:cover;border-radius:10px;background:#1e293b}
+.price{color:#4ade80;font-weight:900;font-size:19px}.old{color:#94a3b8;text-decoration:line-through;font-size:13px}
+.sec{display:none}.sec.on{display:block}.pill{display:inline-block;background:#164e63;padding:2px 9px;border-radius:99px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid #26365c;padding:7px;text-align:left}
+.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;z-index:20}.modal.on{display:flex}
+.box{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:20px;max-width:440px;width:92%;max-height:90vh;overflow:auto}
+.msg{color:#4ade80;min-height:18px}.err{color:#f87171}
+</style></head><body>
+<header><div class="logo">THUAN MMO SHOP</div>
+<nav>
+<button onclick="show('shop')">Cửa hàng</button>
+<button onclick="show('cart')">Giỏ hàng (<span id="cartN">0</span>)</button>
+<button onclick="show('wallet')">Ví / Nạp tiền</button>
+<button onclick="show('history')">Lịch sử mua</button>
+<button onclick="show('admin')" id="adminBtn" style="display:none">Quản lý</button>
+</nav><span id="who" style="margin-left:auto"></span>
+<button class="btn" id="authBtn" onclick="openAuth()">Đăng nhập</button></header>
+<div class="wrap">
+<div class="hero"><h1>Tool &amp; Tài nguyên MMO xịn nhất</h1>
+<p>Mua xong tải file ngay • Nạp VietQR MB Bank tối thiểu 10.000đ • Mỗi tài khoản có ví, đơn hàng và lịch sử riêng.</p>
+<input id="q" placeholder="Tìm sản phẩm..." oninput="renderShop()">
+<select id="cat" onchange="renderShop()"><option value="">Tất cả danh mục</option><option>Tool</option><option>Tài nguyên</option><option>Khóa học</option><option>Dịch vụ</option></select></div>
+<section id="shop" class="sec on"><h2>Tất cả sản phẩm</h2><div class="grid" id="grid"></div></section>
+
+<section id="cart" class="sec"><h2>Giỏ hàng</h2><div id="cartList"></div>
+<p>Tổng: <b id="cartTotal">0đ</b> &nbsp; Mã giảm giá: <input id="coupon" style="width:180px;display:inline" placeholder="Nhập mã"></p>
+<button class="btn pri" onclick="checkout()">Thanh toán bằng ví</button><div class="msg" id="cartMsg"></div></section>
+
+<section id="wallet" class="sec"><h2>Ví của tôi</h2><p>Số dư: <b class="price" id="bal">0đ</b></p>
+<h3>Nạp tiền VietQR — MB Bank 332518 — THAN VAN THUAN (tối thiểu 10.000đ)</h3>
+<input id="topAmt" type="number" min="10000" step="1000" placeholder="Nhập số tiền nạp, ví dụ 50000">
+<div><button class="btn" onclick="quick(10000)">10k</button> <button class="btn" onclick="quick(50000)">50k</button> <button class="btn" onclick="quick(100000)">100k</button></div>
+<button class="btn pri" onclick="makeTopup()">Tạo mã nạp</button><div id="qrBox"></div>
+<h3>Lịch sử nạp</h3><div id="topList"></div></section>
+
+<section id="history" class="sec"><h2>Lịch sử mua</h2>
+<button class="btn" onclick="exportOrders()">Xuất file lịch sử mua (.csv)</button>
+<div id="histList" style="margin-top:12px"></div></section>
+
+<section id="admin" class="sec"><h2>Quản lý (Admin)</h2>
+<div id="stats"></div>
+<h3>Thêm / sửa sản phẩm</h3>
+<input id="pId" type="hidden"><input id="pName" placeholder="Tên sản phẩm">
+<select id="pCat"><option>Tool</option><option>Tài nguyên</option><option>Khóa học</option><option>Dịch vụ</option></select>
+<input id="pPrice" type="number" placeholder="Giá (đ)"><input id="pOld" type="number" placeholder="Giá gốc (đ, để trống nếu không giảm)">
+<input id="pImg" placeholder="Link ảnh sản phẩm (để trống = ảnh mặc định)">
+<label>Nội dung giao sau khi mua (link tải / ghi chú giao hàng):</label>
+<textarea id="pDeliver" rows="2" placeholder="Ví dụ: link Google Drive file tool, hướng dẫn dùng..."></textarea>
+<label>File tool đính kèm (zip/exe/rar/apk, tối đa ~2MB khi lưu trên trình duyệt): <input id="pFile" type="file"></label>
+<button class="btn pri" onclick="saveProduct()">Lưu sản phẩm</button><div class="msg" id="admMsg"></div>
+<h3>Sản phẩm</h3><div id="admProducts"></div>
+<h3>Duyệt nạp tiền</h3><div id="admTopups"></div>
+<h3>Thành viên</h3><div id="admUsers"></div>
+<h3>Đơn hàng</h3><div id="admOrders"></div>
+<h3>Mã giảm giá</h3><input id="cCode" placeholder="Mã, ví dụ SALE10"><input id="cPct" type="number" placeholder="% giảm">
+<button class="btn" onclick="addCoupon()">Tạo mã</button><div id="admCoupons"></div></section>
+</div>
+<div class="modal" id="authModal"><div class="box">
+<h3 id="authTitle">Đăng nhập</h3>
+<div id="regFields" style="display:none">
+<input id="rName" placeholder="Tên hiển thị"><input id="rContact" placeholder="Email hoặc số điện thoại"></div>
+<input id="aUser" placeholder="Tên đăng nhập / email / SĐT">
+<input id="aPass" type="password" placeholder="Mật khẩu">
+<button class="btn pri" style="width:100%" onclick="doAuth()">Tiếp tục</button>
+<p><a href="#" onclick="toggleAuth(event)">Chưa có tài khoản? Đăng ký</a> •
+<a href="#" onclick="forgot(event)">Quên mật khẩu</a></p>
+<div id="forgotBox" style="display:none">
+<input id="fMail" placeholder="Nhập email đã đăng ký"><button class="btn" onclick="sendCode()">Gửi mã về email</button>
+<input id="fCode" placeholder="Mã 6 số"><input id="fNew" type="password" placeholder="Mật khẩu mới">
+<button class="btn pri" onclick="resetPass()">Đặt lại mật khẩu</button>
+<p style="font-size:12px;color:#94a3b8">Bản deploy cần cấu hình RESEND_API_KEY trên Vercel để gửi mail thật (xem HUONG_DAN). Khi chưa cấu hình, mã sẽ hiện tại đây để chủ shop test: <b id="devCode"></b></p></div>
+<div class="err" id="authErr"></div><div class="msg" id="authMsg"></div>
+<button class="btn" onclick="document.getElementById('authModal').classList.remove('on')">Đóng</button>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n||0).toLocaleString('vi-VN')+'đ';
+const DBK='tmshop_v1';
+let seedP=[
+{id:'p1',name:'TM Media Tool — Quản lý video & đăng TikTok qua API chính thức',cat:'Tool',price:299000,old:499000,img:'',deliver:'Điền link tải file tool của bạn trong Quản lý > sửa sản phẩm này.',fileName:'',fileData:''},
+{id:'p2',name:'Bộ template CapCut MMO (mẫu sẵn)',cat:'Tài nguyên',price:99000,old:199000,img:'',deliver:'Điền link tải template trong Quản lý.',fileName:'',fileData:''},
+{id:'p3',name:'Khóa học MMO cơ bản — Tự học qua video',cat:'Khóa học',price:199000,old:399000,img:'',deliver:'Điền link khóa học trong Quản lý.',fileName:'',fileData:''},
+{id:'p4',name:'Ebook chiến lược kênh TikTok',cat:'Tài nguyên',price:79000,old:149000,img:'',deliver:'Điền link tải ebook trong Quản lý.',fileName:'',fileData:''}];
+function load(){try{return JSON.parse(localStorage.getItem(DBK))||null}catch(e){return null}}
+function save(){localStorage.setItem(DBK,JSON.stringify(db))}
+let db=load()||{users:[{u:'tmmedia',pass:'thuan2007@',name:'Admin TM Media',contact:'thuanmmo207@gmail.com',mail:'thuanmmo207@gmail.com',role:'admin',bal:0}],
+products:seedP,orders:[],topups:[],coupons:[{code:'WELCOME10',pct:10}],codes:{}};
+if(!load())save();
+let me=sessionStorage.getItem('tm_user')||'';
+let cart=[];
+function cur(){return db.users.find(x=>x.u===me)}
+function show(id){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');
+if(id==='shop')renderShop();if(id==='cart')renderCart();if(id==='wallet')renderWallet();if(id==='history')renderHist();if(id==='admin')renderAdmin();syncHead()}
+function syncHead(){let u=cur();$('who').textContent=u?('Xin chào '+u.name+' • Ví: '+fmt(u.bal)):'';$('authBtn').textContent=u?'Đăng xuất':'Đăng nhập';
+$('adminBtn').style.display=(u&&u.role==='admin')?'':'none';$('cartN').textContent=cart.length;$('bal').textContent=u?fmt(u.bal):'0đ'}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function renderShop(){let q=($('q').value||'').toLowerCase(),c=$('cat').value;
+$('grid').innerHTML=db.products.filter(p=>(!c||p.cat===c)&&p.name.toLowerCase().includes(q)).map(p=>
+'<div class="card">'+(p.img?'<img src="'+esc(p.img)+'">':'<img alt="">')+'<span class="pill">'+esc(p.cat)+'</span><h3>'+esc(p.name)+'</h3>'+
+(p.fileName?'<p><span class="pill">Kèm file tải về</span></p>':'')+
+'<p><span class="price">'+fmt(p.price)+'</span> '+(p.old?'<span class="old">'+fmt(p.old)+'</span>':'')+'</p>'+
+'<button class="btn" onclick="addCart(\''+p.id+'\')">Thêm vào giỏ</button> <button class="btn pri" onclick="buyNow(\''+p.id+'\')">Mua ngay</button></div>').join('')||'<p>Chưa có sản phẩm.</p>'}
+function addCart(id){cart.push(id);syncHead();alert('Đã thêm vào giỏ')}
+function buyNow(id){cart=[id];show('cart')}
+function cartItems(){return cart.map(id=>db.products.find(p=>p.id===id)).filter(Boolean)}
+function cartSum(){let s=cartItems().reduce((a,p)=>a+ +p.price,0);let cp=db.coupons.find(x=>x.code===($('coupon')?$('coupon').value.trim().toUpperCase():''));if(cp)s=Math.round(s*(1-cp.pct/100));return s}
+function renderCart(){$('cartList').innerHTML=cartItems().map((p,i)=>'<p>'+esc(p.name)+' — <b>'+fmt(p.price)+'</b> <button class="btn warn" onclick="cart.splice('+i+',1);renderCart();syncHead()">Xóa</button></p>').join('')||'<p>Giỏ trống.</p>';$('cartTotal').textContent=fmt(cartSum())}
+function needLogin(){if(!cur()){openAuth();return true}return false}
+function checkout(){if(needLogin())return;if(!cart.length)return;let u=cur(),s=cartSum();
+if(u.bal<s){$('cartMsg').textContent='Ví không đủ. Hãy nạp thêm tối thiểu 10.000đ ở mục Ví.';show('wallet');return}
+u.bal-=s;cartItems().forEach(p=>db.orders.unshift({id:'DH'+Date.now()+Math.floor(Math.random()*999),user:u.u,pid:p.id,name:p.name,price:p.price,time:new Date().toLocaleString('vi-VN'),deliver:p.deliver||'',fileName:p.fileName||'',fileData:p.fileData||''}));
+cart=[];save();syncHead();renderCart();$('cartMsg').textContent='Mua thành công! Vào Lịch sử mua để tải file / nhận nội dung.';show('history')}
+function dl(o){let p=db.products.find(x=>x.id===o.pid);let fn=(o.fileName||(p&&p.fileName)||'');let fd=(o.fileData||(p&&p.fileData)||'');
+if(fd){let a=document.createElement('a');a.href=fd;a.download=fn;a.click();return}
+let txt='THUAN MMO SHOP\nDon: '+o.id+'\nSan pham: '+o.name+'\nNoi dung giao: '+(o.deliver||(p&&p.deliver)||'')+'\n';
+let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download='don-'+o.id+'.txt';a.click()}
+function renderHist(){if(needLogin())return;let list=db.orders.filter(o=>o.user===me);
+$('histList').innerHTML=list.map(o=>'<p><b>'+o.id+'</b> • '+esc(o.name)+' • '+fmt(o.price)+' • '+o.time+' <button class="btn pri" onclick="dlById(\''+o.id+'\')">Tải file / Nhận hàng</button></p>').join('')||'<p>Chưa có đơn nào.</p>'}
+function dlById(id){let o=db.orders.find(x=>x.id===id);if(o)dl(o)}
+// override button to use id safely
+document.addEventListener('click',e=>{});
+function exportOrders(){let list=db.orders.filter(o=>o.user===me);let csv='ma_don,san_pham,gia,thoi_gian\n'+list.map(o=>[o.id,'"'+o.name.replace(/"/g,'""')+'"',o.price,'"'+o.time+'"'].join(',')).join('\n');
+let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='lich-su-mua.csv';a.click()}
+function quick(v){$('topAmt').value=v}
+function makeTopup(){if(needLogin())return;let amt=+$('topAmt').value||0;
+if(amt<10000){$('qrBox').innerHTML='<p class="err">Nạp tối thiểu 10.000đ. Còn thiếu '+fmt(10000-amt)+'</p>';return}
+let code='NAP'+me.toUpperCase()+Date.now().toString().slice(-6);
+db.topups.unshift({id:code,user:me,amt:amt,status:'Chờ duyệt',time:new Date().toLocaleString('vi-VN')});save();
+let qr='https://img.vietqr.io/image/MB-332518-compact2.png?amount='+amt+'&addInfo='+encodeURIComponent(code)+'&accountName=THAN%20VAN%20THUAN';
+$('qrBox').innerHTML='<p>Quét QR để chuyển <b>'+fmt(amt)+'</b> — Nội dung: <b>'+code+'</b></p><img src="'+qr+'" style="max-width:280px;border-radius:12px;background:#fff;padding:8px"><p>Chuyển xong chờ admin duyệt, tiền sẽ cộng vào ví của bạn.</p>';renderWallet()}
+function renderWallet(){syncHead();let list=db.topups.filter(t=>t.user===me);
+$('topList').innerHTML=list.map(t=>'<p>'+t.id+' • '+fmt(t.amt)+' • '+t.status+' • '+t.time+'</p>').join('')||'<p>Chưa có lần nạp nào.</p>'}
+let isReg=false;
+function openAuth(){$('authModal').classList.add('on')}
+function toggleAuth(e){e.preventDefault();isReg=!isReg;$('regFields').style.display=isReg?'':'none';$('authTitle').textContent=isReg?'Đăng ký tài khoản':'Đăng nhập'}
+function doAuth(){let u=$('aUser').value.trim(),p=$('aPass').value;
+if(isReg){let contact=$('rContact').value.trim(),name=$('rName').value.trim();
+if(!u||!p||!contact){$('authErr').textContent='Điền đủ tên đăng nhập, mật khẩu và email/SĐT.';return}
+if(db.users.find(x=>x.u.toLowerCase()===u.toLowerCase())){$('authErr').textContent='Tên đăng nhập đã tồn tại.';return}
+db.users.push({u:u,pass:p,name:name||u,contact:contact,mail:contact.includes('@')?contact:'',role:'user',bal:0});save();me=u;sessionStorage.setItem('tm_user',u);$('authModal').classList.remove('on');syncHead();alert('Đăng ký thành công!')}
+else{if(u===''&&cur()){return}
+let f=db.users.find(x=>x.u===u||x.mail===u||x.contact===u);
+if(!f||f.pass!==p){if(!u&&!p){me='';sessionStorage.removeItem('tm_user');syncHead();$('authModal').classList.remove('on');return}$('authErr').textContent='Sai thông tin đăng nhập.';return}
+me=f.u;sessionStorage.setItem('tm_user',f.u);$('authModal').classList.remove('on');$('authErr').textContent='';syncHead();show('shop')}}
+$('authBtn').onclick=function(){if(cur()){me='';sessionStorage.removeItem('tm_user');cart=[];syncHead();alert('Đã đăng xuất')}else openAuth()};
+function forgot(e){e.preventDefault();$('forgotBox').style.display='block'}
+async function sendCode(){let m=$('fMail').value.trim();let f=db.users.find(x=>x.mail===m);
+if(!f){$('authErr').textContent='Không tìm thấy tài khoản với email này.';return}
+let code=String(Math.floor(100000+Math.random()*900000));db.codes[m]={code:code,exp:Date.now()+15*60000};save();
+try{let r=await fetch('/api/send-reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:m,code:code})});if(!r.ok)throw 0;$('authMsg').textContent='Đã gửi mã về email, hiệu lực 15 phút.'}
+catch(e){$('devCode').textContent=code;$('authMsg').textContent='Chưa cấu hình gửi mail trên Vercel — dùng mã test hiện bên dưới (chỉ khi chưa cấu hình).'}}
+function resetPass(){let m=$('fMail').value.trim(),c=$('fCode').value.trim(),n=$('fNew').value;let rec=db.codes[m];
+if(!rec||rec.code!==c||Date.now()>rec.exp){$('authErr').textContent='Mã sai hoặc đã hết hạn.';return}
+let f=db.users.find(x=>x.mail===m);f.pass=n;delete db.codes[m];save();$('authMsg').textContent='Đặt lại mật khẩu thành công, hãy đăng nhập lại.';$('authErr').textContent=''}
+let pendingFile={name:'',data:''};
+document.addEventListener('change',e=>{if(e.target.id==='pFile'){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{pendingFile={name:f.name,data:r.result}};r.readAsDataURL(f)}});
+function saveProduct(){let id=$('pId').value||('p'+Date.now());let ex=db.products.find(p=>p.id===id);
+let o={id:id,name:$('pName').value.trim(),cat:$('pCat').value,price:+$('pPrice').value||0,old:+$('pOld').value||'',img:$('pImg').value.trim(),deliver:$('pDeliver').value.trim(),fileName:pendingFile.name||(ex?ex.fileName:''),fileData:pendingFile.data||(ex?ex.fileData:'')};
+if(!o.name){$('admMsg').textContent='Chưa nhập tên sản phẩm.';return}
+if(ex)Object.assign(ex,o);else db.products.push(o);save();pendingFile={name:'',data:''};$('admMsg').textContent='Đã lưu sản phẩm.';renderAdmin();renderShop()}
+function editP(id){let p=db.products.find(x=>x.id===id);$('pId').value=p.id;$('pName').value=p.name;$('pCat').value=p.cat;$('pPrice').value=p.price;$('pOld').value=p.old||'';$('pImg').value=p.img||'';$('pDeliver').value=p.deliver||'';window.scrollTo(0,0)}
+function delP(id){db.products=db.products.filter(p=>p.id!==id);save();renderAdmin();renderShop()}
+function approveTop(id){let t=db.topups.find(x=>x.id===id);if(!t||t.status==='Đã duyệt')return;t.status='Đã duyệt';let u=db.users.find(x=>x.u===t.user);if(u)u.bal+= +t.amt;save();renderAdmin();renderWallet()}
+function rejectTop(id){let t=db.topups.find(x=>x.id===id);if(t)t.status='Từ chối';save();renderAdmin()}
+function setPass(u){let n=prompt('Mật khẩu mới cho '+u);if(!n)return;let f=db.users.find(x=>x.u===u);f.pass=n;save();alert('Đã đặt lại mật khẩu')}
+function addCoupon(){let c=$('cCode').value.trim().toUpperCase(),p=+$('cPct').value||0;if(c&&p)db.coupons.push({code:c,pct:p});save();renderAdmin()}
+function renderAdmin(){let u=cur();if(!u||u.role!=='admin'){$('admin').innerHTML='<p>Chỉ admin mới vào được mục này.</p>';return}
+let rev=db.orders.reduce((a,o)=>a+ +o.price,0);
+$('stats').innerHTML='<p>Doanh thu: <b>'+fmt(rev)+'</b> • Đơn: <b>'+db.orders.length+'</b> • Thành viên: <b>'+db.users.length+'</b> • Sản phẩm: <b>'+db.products.length+'</b></p>';
+$('admProducts').innerHTML=db.products.map(p=>'<p>'+esc(p.name)+' — '+fmt(p.price)+' <button class="btn" onclick="editP(\''+p.id+'\')">Sửa</button> <button class="btn warn" onclick="delP(\''+p.id+'\')">Xóa</button></p>').join('');
+$('admTopups').innerHTML=db.topups.map(t=>'<p>'+t.id+' • '+t.user+' • '+fmt(t.amt)+' • '+t.status+' <button class="btn" onclick="approveTop(\''+t.id+'\')">Duyệt + cộng ví</button> <button class="btn warn" onclick="rejectTop(\''+t.id+'\')">Từ chối</button></p>').join('')||'<p>Chưa có yêu cầu nạp.</p>';
+$('admUsers').innerHTML='<table><tr><th>User</th><th>Tên</th><th>Liên hệ</th><th>Ví</th><th></th></tr>'+db.users.map(x=>'<tr><td>'+esc(x.u)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.contact)+'</td><td>'+fmt(x.bal)+'</td><td><button class="btn" onclick="setPass(\''+x.u+'\')">Đặt lại MK</button></td></tr>').join('')+'</table>';
+$('admOrders').innerHTML=db.orders.map(o=>'<p>'+o.id+' • '+o.user+' • '+esc(o.name)+' • '+fmt(o.price)+' • '+o.time+'</p>').join('')||'<p>Chưa có đơn.</p>';
+$('admCoupons').innerHTML=db.coupons.map(c=>'<p>'+esc(c.code)+' — giảm '+c.pct+'%</p>').join('')}
+syncHead();renderShop();
+</script></body></html>
